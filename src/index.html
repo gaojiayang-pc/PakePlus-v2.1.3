@@ -1,32 +1,520 @@
 <!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <link rel="stylesheet" href="styles.css" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>PakePlus App</title>
-        <script type="module" src="/main.js" defer></script>
-    </head>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>包豪斯考场大屏系统</title>
+    <style>
+        /* =========================================
+           Bauhaus Design System
+           ========================================= */
+        :root {
+            --c-red: #E93630;
+            --c-blue: #1A5FA8;
+            --c-yellow: #F4B806;
+            --c-black: #111111;
+            --c-white: #F0F0F0;
+            --c-bg: #EAEAEA;
+            --font-main: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            --grid-gap: 4px;
+        }
 
-    <body>
-        <main class="container">
-            <h1>Welcome to PakePlus</h1>
-            <form class="row" id="greet-form">
-                <input id="inputValue" placeholder="Enter a something..." />
-            </form>
-            <div class="resultBox">
-                <span>result: </span>
-                <span id="result"></span>
+        * {
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: var(--font-main);
+            background-color: var(--c-bg);
+            color: var(--c-black);
+            height: 100vh;
+            overflow: hidden; /* 防止滚动 */
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 通用几何类 */
+        .geo-block {
+            background: white;
+            padding: 20px;
+            border: 0;
+            box-shadow: 4px 4px 0px var(--c-black); /* 硬朗阴影 */
+            transition: all 0.2s ease;
+        }
+
+        .btn {
+            border: 2px solid var(--c-black);
+            background: white;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            padding: 10px 20px;
+            text-transform: uppercase;
+            box-shadow: 2px 2px 0 var(--c-black);
+        }
+
+        .btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: none;
+        }
+
+        .btn-primary { background: var(--c-blue); color: white; border: none; }
+        .btn-danger { background: var(--c-red); color: white; border: none; }
+        .btn-action { background: var(--c-yellow); color: black; border: none; }
+
+        /* =========================================
+           Layout
+           ========================================= */
+        
+        /* 顶部栏：时间与标题 */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            background: var(--c-white);
+            border-bottom: 4px solid var(--c-black);
+        }
+
+        .brand h1 {
+            margin: 0;
+            font-size: 2rem;
+            letter-spacing: -1px;
+            text-transform: uppercase;
+        }
+
+        .brand span {
+            background: var(--c-yellow);
+            padding: 0 10px;
+        }
+
+        #real-time-clock {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            font-size: 1.5rem;
+            background: var(--c-black);
+            color: var(--c-white);
+            padding: 5px 15px;
+        }
+
+        /* 主体区域 */
+        main {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 0;
+            height: 100%;
+        }
+
+        /* 左侧：信息面板 */
+        .info-panel {
+            background: var(--c-blue);
+            color: white;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            border-right: 4px solid var(--c-black);
+            position: relative;
+        }
+
+        .info-item {
+            margin-bottom: 40px;
+        }
+
+        .info-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            text-transform: uppercase;
+            border-bottom: 2px solid white;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+
+        .info-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            line-height: 1.1;
+        }
+
+        /* 设置抽屉 (默认隐藏) */
+        #settings-drawer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.95);
+            padding: 30px;
+            color: black;
+            transform: translateX(-100%);
+            transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            z-index: 10;
+            border-right: 4px solid var(--c-black);
+        }
+
+        #settings-drawer.open {
+            transform: translateX(0);
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        .input-group label { display: block; font-weight: bold; margin-bottom: 5px; }
+        .input-group input { 
+            width: 100%; 
+            padding: 10px; 
+            border: 2px solid var(--c-black); 
+            font-size: 1.1rem;
+        }
+
+        /* 右侧：倒计时主视觉 */
+        .timer-display {
+            background: var(--c-white);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        /* 巨大的计时器数字 */
+        #main-timer {
+            font-size: 18vw; /* 视窗宽度的18%，保证巨大 */
+            font-weight: 800;
+            font-variant-numeric: tabular-nums; /* 等宽数字，防止跳动 */
+            line-height: 1;
+            color: var(--c-black);
+            letter-spacing: -5px;
+        }
+
+        .timer-status-text {
+            font-size: 2rem;
+            margin-top: -20px;
+            font-weight: bold;
+            color: var(--c-red);
+            opacity: 0; /* 默认隐藏 */
+            transition: opacity 0.3s;
+        }
+
+        /* 底部控制栏 */
+        .controls-bar {
+            position: absolute;
+            bottom: 40px;
+            display: flex;
+            gap: 20px;
+        }
+
+        /* 进度条 (底部) */
+        .progress-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 20px;
+            background: var(--c-black);
+            display: flex;
+        }
+
+        #progress-bar {
+            height: 100%;
+            width: 0%;
+            background: var(--c-yellow);
+            transition: width 1s linear;
+        }
+
+        /* =========================================
+           States & Animations
+           ========================================= */
+        
+        /* 警告状态：最后阶段 */
+        body.warning .info-panel { background: var(--c-yellow); color: black; }
+        body.warning .info-label { border-color: black; }
+        body.warning #main-timer { color: var(--c-black); }
+
+        /* 紧急状态：结束前 */
+        body.alert .info-panel { background: var(--c-red); color: white; }
+        body.alert #main-timer { 
+            color: var(--c-red); 
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        /* 隐藏元素 */
+        .hidden { display: none !important; }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="brand">
+            <h1>笔试考场系统 <span>V.BAUHAUS</span></h1>
+        </div>
+        <div id="real-time-clock">00:00:00</div>
+    </header>
+
+    <main>
+        <!-- 左侧信息区 -->
+        <aside class="info-panel">
+            
+            <div id="display-info">
+                <div class="info-item">
+                    <span class="info-label">考试科目 / SUBJECT</span>
+                    <div class="info-value" id="disp-subject">未设置</div>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">监考员 / INVIGILATOR</span>
+                    <div class="info-value" id="disp-invigilator">---</div>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">考试时间 / TIME</span>
+                    <div class="info-value"><span id="disp-duration">0</span> 分钟</div>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">预计结束 / FINISH AT</span>
+                    <div class="info-value" id="disp-end-time">--:--</div>
+                </div>
             </div>
-            <div class="invokeBox">
-                <button id="openUrl">open_url_browser</button>
-                <button id="openUrlNew">open_url_new</button>
-                <button id="runCommand">run_command</button>
-                <button id="downloadFile">download_file</button>
-                <button id="getExeDir">get_exe_dir</button>
-                <button id="getEnvVar">get_env_var</button>
-                <button id="findPort">find_port</button>
+
+            <button class="btn btn-action" onclick="toggleSettings()" style="margin-top:auto;">⚙ 设置 / SETTINGS</button>
+
+            <!-- 设置抽屉 -->
+            <div id="settings-drawer">
+                <h2>考场设置</h2>
+                <div class="input-group">
+                    <label>科目名称</label>
+                    <input type="text" id="in-subject" value="大学英语 IV">
+                </div>
+                <div class="input-group">
+                    <label>监考老师</label>
+                    <input type="text" id="in-invigilator" value="张老师">
+                </div>
+                <div class="input-group">
+                    <label>考试时长 (分钟)</label>
+                    <input type="number" id="in-duration" value="90">
+                </div>
+                <div style="margin-top: 30px; display: flex; gap: 10px;">
+                    <button class="btn btn-primary" onclick="saveSettings()">保存并返回</button>
+                    <button class="btn" onclick="toggleSettings()">取消</button>
+                </div>
             </div>
-        </main>
-    </body>
+        </aside>
+
+        <!-- 右侧倒计时区 -->
+        <section class="timer-display">
+            <div id="main-timer">00:00</div>
+            <div class="timer-status-text" id="status-text">距离考试结束</div>
+
+            <div class="controls-bar">
+                <button class="btn btn-primary" id="btn-start" onclick="startExam()">开始考试</button>
+                <button class="btn btn-action hidden" id="btn-pause" onclick="pauseExam()">暂停</button>
+                <button class="btn btn-danger hidden" id="btn-stop" onclick="stopExam()">收卷 / 结束</button>
+                <button class="btn" onclick="toggleFullScreen()">⛶ 全屏显示</button>
+            </div>
+
+            <!-- 底部几何进度条 -->
+            <div class="progress-container">
+                <div id="progress-bar"></div>
+            </div>
+        </section>
+    </main>
+
+<script>
+    // 状态变量
+    let totalSeconds = 0;
+    let remainingSeconds = 0;
+    let timerInterval = null;
+    let isRunning = false;
+    let startTime = null;
+
+    // DOM 元素
+    const elTimer = document.getElementById('main-timer');
+    const elProgressBar = document.getElementById('progress-bar');
+    const elEndTime = document.getElementById('disp-end-time');
+    const elStatusText = document.getElementById('status-text');
+    
+    // 初始化
+    window.onload = () => {
+        saveSettings(); // 加载默认值
+        updateClock();
+        setInterval(updateClock, 1000);
+    };
+
+    // 实时时钟
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('real-time-clock').innerText = now.toLocaleTimeString('zh-CN', { hour12: false });
+        
+        // 如果考试正在进行，动态更新预计结束时间（防止暂停造成的偏差）
+        if (isRunning && startTime) {
+            // 这里保持结束时间固定，还是随暂停顺延？通常考试暂停需顺延。
+            // 简单起见，我们在startExam计算一次。如果需要顺延，逻辑会更复杂。
+        }
+    }
+
+    // 切换设置面板
+    function toggleSettings() {
+        document.getElementById('settings-drawer').classList.toggle('open');
+    }
+
+    // 保存设置
+    function saveSettings() {
+        const subj = document.getElementById('in-subject').value;
+        const invig = document.getElementById('in-invigilator').value;
+        const dur = parseInt(document.getElementById('in-duration').value);
+
+        document.getElementById('disp-subject').innerText = subj || "未设置";
+        document.getElementById('disp-invigilator').innerText = invig || "---";
+        document.getElementById('disp-duration').innerText = dur;
+
+        // 重置计时器显示
+        if (!isRunning) {
+            totalSeconds = dur * 60;
+            remainingSeconds = totalSeconds;
+            updateTimerDisplay();
+            elProgressBar.style.width = '0%';
+        }
+
+        toggleSettings();
+    }
+
+    // 格式化时间 MM:SS 或 HH:MM:SS
+    function formatTime(sec) {
+        const h = Math.floor(sec / 3600);
+        const m = Math.floor((sec % 3600) / 60);
+        const s = sec % 60;
+        
+        // 如果超过1小时，显示 H:MM:SS，否则显示 MM:SS
+        if (h > 0) {
+            return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        } else {
+            return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
+    }
+
+    // 更新显示
+    function updateTimerDisplay() {
+        elTimer.innerText = formatTime(remainingSeconds);
+        
+        // 进度条
+        const percent = ((totalSeconds - remainingSeconds) / totalSeconds) * 100;
+        elProgressBar.style.width = `${percent}%`;
+
+        // 样式状态控制
+        document.body.classList.remove('warning', 'alert');
+        
+        if (remainingSeconds <= 300 && remainingSeconds > 0) { // 最后5分钟
+            document.body.classList.add('alert');
+            elStatusText.innerText = "请检查姓名考号，准备收卷";
+            elStatusText.style.opacity = 1;
+        } else if (remainingSeconds <= 900 && remainingSeconds > 0) { // 最后15分钟
+            document.body.classList.add('warning');
+            elStatusText.innerText = "距离考试结束仅剩 15 分钟";
+            elStatusText.style.opacity = 1;
+        } else {
+            elStatusText.style.opacity = 0;
+        }
+    }
+
+    // 开始考试
+    function startExam() {
+        if (isRunning) return;
+
+        const durationMinutes = parseInt(document.getElementById('in-duration').value);
+        if (!remainingSeconds || remainingSeconds <= 0) {
+             remainingSeconds = durationMinutes * 60;
+             totalSeconds = remainingSeconds;
+        }
+
+        // 计算预计结束时间
+        const now = new Date();
+        const endTime = new Date(now.getTime() + remainingSeconds * 1000);
+        elEndTime.innerText = endTime.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+
+        isRunning = true;
+        
+        // 按钮状态
+        document.getElementById('btn-start').classList.add('hidden');
+        document.getElementById('btn-pause').classList.remove('hidden');
+        document.getElementById('btn-stop').classList.remove('hidden');
+
+        // 启动计时
+        timerInterval = setInterval(() => {
+            remainingSeconds--;
+            updateTimerDisplay();
+
+            if (remainingSeconds <= 0) {
+                examFinished();
+            }
+        }, 1000);
+    }
+
+    // 暂停考试
+    function pauseExam() {
+        if (!isRunning) return;
+        clearInterval(timerInterval);
+        isRunning = false;
+        
+        document.getElementById('btn-start').innerText = "继续考试";
+        document.getElementById('btn-start').classList.remove('hidden');
+        document.getElementById('btn-pause').classList.add('hidden');
+        elStatusText.innerText = "考试暂停 / PAUSED";
+        elStatusText.style.opacity = 1;
+        elStatusText.style.color = "var(--c-blue)";
+    }
+
+    // 结束/收卷
+    function stopExam() {
+        if(confirm("确定要提前结束考试吗？")) {
+            examFinished();
+        }
+    }
+
+    // 考试结束逻辑
+    function examFinished() {
+        clearInterval(timerInterval);
+        isRunning = false;
+        remainingSeconds = 0;
+        updateTimerDisplay();
+        
+        elTimer.innerText = "00:00";
+        elStatusText.innerText = "考试结束 / TIME IS UP";
+        elStatusText.style.opacity = 1;
+        elStatusText.style.color = "var(--c-red)";
+        
+        document.body.classList.add('alert'); // 红色闪烁背景
+
+        // 按钮重置
+        document.getElementById('btn-start').innerText = "重新开始";
+        document.getElementById('btn-start').classList.remove('hidden');
+        document.getElementById('btn-pause').classList.add('hidden');
+        document.getElementById('btn-stop').classList.add('hidden');
+        
+        // 播放提示音 (可选，浏览器可能需要交互才能播放)
+        // const audio = new Audio('alert.mp3'); audio.play();
+    }
+
+    // 全屏切换
+    function toggleFullScreen() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen();
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            }
+        }
+    }
+
+</script>
+</body>
 </html>

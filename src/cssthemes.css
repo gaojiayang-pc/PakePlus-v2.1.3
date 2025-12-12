@@ -1,0 +1,47 @@
+/* === 主题定义库 === */
+
+/* 1. iOS (Apple) */
+[data-theme="ios"] { --bg:#F2F2F7; --card-bg:#FFFFFF; --card-border:none; --shadow:0 4px 12px rgba(0,0,0,0.05); --text-main:#1C1C1E; --accent:#007AFF; --radius-def:20px; --font-ui:'Inter'; --font-num:'Inter'; --backdrop:blur(20px); }
+/* 2. Bauhaus */
+[data-theme="bauhaus"] { --bg:#F0F0F0; --card-bg:#FFFFFF; --card-border:3px solid #121212; --shadow:6px 6px 0px #121212; --text-main:#121212; --accent:#D92B2B; --radius-def:0px; --font-ui:'Inter'; --font-num:'JetBrains Mono'; --backdrop:none; }
+/* 3. Retro 95 */
+[data-theme="retro95"] { --bg:#008080; --card-bg:#C0C0C0; --card-border:2px solid #DFDFDF; --shadow:inset 2px 2px #fff, inset -2px -2px #0a0a0a, 2px 2px 0 #000; --text-main:#000; --accent:#000080; --radius-def:0px; --font-ui:'VT323'; --font-num:'VT323'; --backdrop:none; }
+/* 4. Win 10 */
+[data-theme="win10"] { --bg:#1F1F1F; --card-bg:rgba(40,40,40,0.9); --card-border:1px solid rgba(255,255,255,0.1); --shadow:0 4px 20px rgba(0,0,0,0.5); --text-main:#FFF; --accent:#0078D7; --radius-def:0px; --font-ui:'Segoe UI','Inter'; --font-num:'Segoe UI'; --backdrop:blur(30px); }
+/* 5. Win 11 */
+[data-theme="win11"] { --bg:#F3F3F3; --card-bg:rgba(255,255,255,0.6); --card-border:1px solid rgba(0,0,0,0.05); --shadow:0 4px 16px rgba(0,0,0,0.03); --text-main:#202020; --accent:#0067C0; --radius-def:8px; --font-ui:'Segoe UI','Inter'; --font-num:'Segoe UI'; --backdrop:blur(20px); }
+/* 6. Neo */
+[data-theme="neo"] { --bg:#E0E5EC; --card-bg:#E0E5EC; --card-border:none; --shadow:9px 9px 16px rgb(163,177,198,0.6), -9px -9px 16px rgba(255,255,255,0.5); --text-main:#4A4A4A; --accent:#6C5CE7; --radius-def:30px; --font-ui:'Inter'; --font-num:'Inter'; --backdrop:none; }
+/* 7. Mini */
+[data-theme="mini"] { --bg:#F9FAFB; --card-bg:#FFFFFF; --card-border:1px solid #E5E7EB; --shadow:0 1px 2px rgba(0,0,0,0.05); --text-main:#111; --accent:#000; --radius-def:0px; --font-ui:'Inter'; --font-num:'Inter'; --backdrop:none; }
+/* 8. Line */
+[data-theme="line"] { --bg:#FFF; --card-bg:transparent; --card-border:2px solid #000; --shadow:4px 4px 0 #000; --text-main:#000; --accent:#000; --radius-def:0px; --font-ui:'JetBrains Mono'; --font-num:'JetBrains Mono'; --backdrop:none; }
+/* 9. Cartoon */
+[data-theme="cartoon"] { --bg:#85FFBD; --card-bg:#FFF; --card-border:3px solid #000; --shadow:0 6px 0 rgba(0,0,0,0.15); --text-main:#000; --accent:#FF6B6B; --radius-def:25px; --font-ui:'Comic Neue'; --font-num:'Comic Neue'; --backdrop:none; }
+/* 10. Pooh */
+[data-theme="pooh"] { --bg:#FFD93D; --card-bg:#FFF8E1; --card-border:2px solid #FF6B6B; --shadow:0 6px 0 #FF6B6B; --text-main:#5D4037; --accent:#FF6B6B; --radius-def:30px; --font-ui:'Comic Neue'; --font-num:'Comic Neue'; --backdrop:none; }
+
+/* --- NEW THEMES --- */
+/* 11. Matrix */
+[data-theme="matrix"] { --bg:#000; --card-bg:rgba(0,20,0,0.9); --card-border:1px solid #0F0; --shadow:0 0 10px rgba(0,255,0,0.2); --text-main:#0F0; --accent:#0F0; --radius-def:0px; --font-ui:'VT323'; --font-num:'VT323'; --backdrop:none; }
+/* 12. Dracula */
+[data-theme="dracula"] { --bg:#282a36; --card-bg:#44475a; --card-border:none; --shadow:0 4px 15px rgba(0,0,0,0.3); --text-main:#f8f8f2; --accent:#ff79c6; --radius-def:12px; --font-ui:'JetBrains Mono'; --font-num:'JetBrains Mono'; --backdrop:none; }
+/* 13. Nord */
+[data-theme="nord"] { --bg:#ECEFF4; --card-bg:#FFFFFF; --card-border:1px solid #D8DEE9; --shadow:0 4px 10px rgba(46,52,64,0.1); --text-main:#2E3440; --accent:#88C0D0; --radius-def:10px; --font-ui:'Inter'; --font-num:'Inter'; --backdrop:none; }
+/* 14. Gameboy */
+[data-theme="gameboy"] { --bg:#8bac0f; --card-bg:#9bbc0f; --card-border:4px solid #0f380f; --shadow:6px 6px 0 #306230; --text-main:#0f380f; --accent:#306230; --radius-def:4px; --font-ui:'VT323'; --font-num:'VT323'; --backdrop:none; }
+/* 15. Synthwave */
+[data-theme="synth"] { --bg:linear-gradient(to bottom, #2b2149, #6d1c52); --card-bg:rgba(43, 33, 73, 0.8); --card-border:2px solid #f7d747; --shadow:0 0 15px rgba(247, 215, 71, 0.4); --text-main:#0ff; --accent:#f0f; --radius-def:0px; --font-ui:'JetBrains Mono'; --font-num:'JetBrains Mono'; --backdrop:blur(10px); }
+/* 16. Paper */
+[data-theme="paper"] { --bg:#fdfbf7; --card-bg:#fffefc; --card-border:1px solid #e0dcd3; --shadow:2px 3px 10px rgba(0,0,0,0.05); --text-main:#4b4b4b; --accent:#d35400; --radius-def:2px; --font-ui:'Comic Neue'; --font-num:'Comic Neue'; --backdrop:none; }
+/* 17. Lavender */
+[data-theme="lavender"] { --bg:#E6E6FA; --card-bg:#FFF0F5; --card-border:2px dashed #9370DB; --shadow:4px 4px 0 rgba(147, 112, 219, 0.3); --text-main:#483D8B; --accent:#9370DB; --radius-def:20px; --font-ui:'Comic Neue'; --font-num:'Comic Neue'; --backdrop:none; }
+/* 18. Dark Glass */
+[data-theme="darkglass"] { --bg:#121212; --card-bg:rgba(255,255,255,0.08); --card-border:1px solid rgba(255,255,255,0.15); --shadow:0 8px 32px rgba(0,0,0,0.5); --text-main:#E0E0E0; --accent:#BB86FC; --radius-def:16px; --font-ui:'Inter'; --font-num:'Inter'; --backdrop:blur(24px); }
+
+/* 特殊纹理适配 */
+[data-theme="line"] body, [data-theme="blueprint"] body { background-image: linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px); background-size: 20px 20px; }
+[data-theme="line"] body { background-image: linear-gradient(#eee 1px, transparent 1px), linear-gradient(90deg, #eee 1px, transparent 1px); }
+[data-theme="cartoon"] body { background-image: radial-gradient(#FFFB7D 20%, transparent 20%), radial-gradient(#FFFB7D 20%, transparent 20%); background-position: 0 0, 50px 50px; background-size: 100px 100px; }
+[data-theme="paper"] body { background-image: repeating-linear-gradient(#fdfbf7 0, #fdfbf7 24px, #e0dcd3 25px); }
+[data-theme="matrix"] body { background-color: #000; background-image: linear-gradient(rgba(0, 255, 0, 0.1) 1px, transparent 1px); background-size: 100% 20px; }

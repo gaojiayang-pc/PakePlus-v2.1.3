@@ -1,32 +1,521 @@
 <!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <link rel="stylesheet" href="styles.css" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>PakePlus App</title>
-        <script type="module" src="/main.js" defer></script>
-    </head>
+<html lang="zh-CN" data-theme="ios">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Timer V21.5 (终极氛围版)</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Roboto+Mono:wght@500;700&family=Comic+Neue:wght=700&family=JetBrains+Mono:wght@700&family=VT323&display=swap" rel="stylesheet">
+    
+    <style>
+        /* ======================================================= */
+        /* === 1. 全局变量 & 主题 === */
+        /* ======================================================= */
+        :root {
+            --timer-scale: 1.0;
+            --custom-text: initial;
+            --custom-accent: initial;
+            --sidebar-width: 320px;
+            --bg-mask-opacity: 0;
+        }
 
-    <body>
-        <main class="container">
-            <h1>Welcome to PakePlus</h1>
-            <form class="row" id="greet-form">
-                <input id="inputValue" placeholder="Enter a something..." />
-            </form>
-            <div class="resultBox">
-                <span>result: </span>
-                <span id="result"></span>
+        /* 主题配置 */
+        [data-theme="ios"] { --bg:#F2F2F7; --card-bg:#FFFFFF; --card-border:none; --shadow:0 4px 12px rgba(0,0,0,0.05); --text-main:#1C1C1E; --accent:#007AFF; --radius:20px; --font-ui:'Inter',sans-serif; --font-num:'Inter',sans-serif; --backdrop:blur(20px); }
+        [data-theme="bauhaus"] { --bg:#F0F0F0; --card-bg:#FFFFFF; --card-border:3px solid #121212; --shadow:6px 6px 0px #121212; --text-main:#121212; --accent:#D92B2B; --radius:0px; --font-ui:'Inter',sans-serif; --font-num:'JetBrains Mono',monospace; --backdrop:none; }
+        [data-theme="retro95"] { --bg:#008080; --card-bg:#C0C0C0; --card-border:2px solid #DFDFDF; --shadow:inset 2px 2px #fff, inset -2px -2px #0a0a0a, 2px 2px 0 #000; --text-main:#000; --accent:#000080; --radius:0px; --font-ui:'VT323',monospace; --font-num:'VT323',monospace; --backdrop:none; }
+        [data-theme="win10"] { --bg:#1F1F1F; --card-bg:rgba(40,40,40,0.9); --card-border:1px solid rgba(255,255,255,0.1); --shadow:0 4px 20px rgba(0,0,0,0.5); --text-main:#FFF; --accent:#0078D7; --radius:0px; --font-ui:'Segoe UI',sans-serif; --font-num:'Segoe UI',sans-serif; --backdrop:blur(30px); }
+        [data-theme="win11"] { --bg:#F3F3F3; --card-bg:rgba(255,255,255,0.6); --card-border:1px solid rgba(0,0,0,0.05); --shadow:0 4px 16px rgba(0,0,0,0.03); --text-main:#202020; --accent:#0067C0; --radius:8px; --font-ui:'Segoe UI',sans-serif; --font-num:'Segoe UI',sans-serif; --backdrop:blur(20px); }
+        [data-theme="neo"] { --bg:#E0E5EC; --card-bg:#E0E5EC; --card-border:none; --shadow:9px 9px 16px rgb(163,177,198,0.6), -9px -9px 16px rgba(255,255,255,0.5); --text-main:#4A4A4A; --accent:#6C5CE7; --radius:30px; --font-ui:'Inter',sans-serif; --font-num:'Inter',sans-serif; --backdrop:none; }
+        [data-theme="mini"] { --bg:#FFF; --card-bg:#FFF; --card-border:1px solid #EEE; --shadow:none; --text-main:#000; --accent:#000; --radius:0px; --font-ui:'Inter',sans-serif; --font-num:'Inter',sans-serif; --backdrop:none; }
+        [data-theme="line"] { --bg:#FFF; --card-bg:transparent; --card-border:2px solid #000; --shadow:4px 4px 0 #000; --text-main:#000; --accent:#000; --radius:0px; --font-ui:'JetBrains Mono',monospace; --font-num:'JetBrains Mono',monospace; --backdrop:none; }
+        [data-theme="cartoon"] { --bg:#85FFBD; --card-bg:#FFF; --card-border:3px solid #000; --shadow:0 6px 0 rgba(0,0,0,0.15); --text-main:#000; --accent:#FF6B6B; --radius:25px; --font-ui:'Comic Neue',cursive; --font-num:'Comic Neue',cursive; --backdrop:none; }
+        [data-theme="pooh"] { --bg:#FFD93D; --card-bg:#FFF8E1; --card-border:2px solid #FF6B6B; --shadow:0 6px 0 #FF6B6B; --text-main:#5D4037; --accent:#FF6B6B; --radius:30px; --font-ui:'Comic Neue',cursive; --font-num:'Comic Neue',cursive; --backdrop:none; }
+
+        /* ======================================================= */
+        /* === 2. 背景与氛围层 (Restored) === */
+        /* ======================================================= */
+        
+        body {
+            font-family: var(--font-ui); color: var(--custom-text, var(--text-main));
+            background-color: var(--bg); margin: 0; padding: 0; min-height: 100vh;
+            overflow-x: hidden; transition: background 0.3s ease, color 0.3s;
+        }
+
+        /* 1. 自定义壁纸层 */
+        #custom-bg-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-size: cover; background-position: center; z-index: -3; transition: opacity 0.5s; }
+        
+        /* 2. 壁纸遮罩层 */
+        #bg-mask-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; opacity: var(--bg-mask-opacity); z-index: -2; pointer-events: none; }
+
+        /* 3. 氛围粒子层 */
+        #atmosphere-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; overflow: hidden; }
+        
+        .emoji-particle {
+            position: absolute; user-select: none; pointer-events: none;
+            opacity: 0.12; filter: blur(2px);
+            animation: floatAnim 45s linear infinite;
+            font-family: "Segoe UI Emoji", "Apple Color Emoji", sans-serif;
+        }
+        @keyframes floatAnim {
+            0% { transform: translateY(110vh) rotate(0deg); opacity: 0; }
+            20% { opacity: 0.12; }
+            80% { opacity: 0.12; }
+            100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
+        }
+
+        /* 特殊主题纹理 */
+        [data-theme="line"] body { background-image: linear-gradient(#eee 1px, transparent 1px), linear-gradient(90deg, #eee 1px, transparent 1px); background-size: 20px 20px; }
+        [data-theme="cartoon"] body { background-image: radial-gradient(#FFFB7D 20%, transparent 20%), radial-gradient(#FFFB7D 20%, transparent 20%); background-position: 0 0, 50px 50px; background-size: 100px 100px; }
+
+        /* ======================================================= */
+        /* === 3. 基础布局 === */
+        /* ======================================================= */
+        
+        #top-bar { position: fixed; top: 0; left: 0; width: 100%; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; box-sizing: border-box; pointer-events: none; }
+        #top-bar > * { pointer-events: auto; }
+        .menu-btn { font-size: 1.1rem; background: var(--card-bg); padding: 10px 16px; border-radius: 10px; cursor: pointer; box-shadow: var(--shadow); border: var(--card-border); font-weight: 600; display: flex; align-items: center; gap: 8px; }
+
+        /* 侧边栏 */
+        #theme-sidebar {
+            position: fixed; top: 0; left: 0; height: 100vh; width: var(--sidebar-width);
+            background: #fff; z-index: 2001; transform: translateX(-100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 5px 0 30px rgba(0,0,0,0.1); overflow-y: auto; padding: 25px; box-sizing: border-box;
+            border-right: 1px solid #eee; color: #333;
+        }
+        [data-theme="win10"] #theme-sidebar { background: #222; color: #fff; border-right: 1px solid #444; }
+        #theme-sidebar.open { transform: translateX(0); }
+        #sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 2000; opacity: 0; pointer-events: none; transition: 0.3s; }
+        #sidebar-overlay.open { opacity: 1; pointer-events: auto; }
+
+        /* 真·主题缩略图 Grid */
+        .theme-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
+        .theme-thumb {
+            aspect-ratio: 1.1; border-radius: 12px; cursor: pointer; position: relative;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: transform 0.2s, box-shadow 0.2s;
+            border: 2px solid transparent; overflow: hidden;
+        }
+        .theme-thumb:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(0,0,0,0.15); }
+        .theme-thumb.active { border-color: #007AFF; box-shadow: 0 0 0 3px rgba(0,122,255,0.3); }
+        
+        .mini-ui-card {
+            width: 60%; height: 40%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; margin-bottom: 8px;
+        }
+        .theme-name-label { font-size: 0.8rem; font-weight: bold; z-index: 2; text-shadow: 0 1px 2px rgba(255,255,255,0.5); }
+
+        .main-wrapper { width: 100%; max-width: 900px; margin: 80px auto 120px; padding: 0 20px; box-sizing: border-box; }
+        .timer-box { background: var(--card-bg); border: var(--card-border); box-shadow: var(--shadow); border-radius: var(--radius); backdrop-filter: var(--backdrop); padding: 40px; margin-bottom: 30px; position: relative; overflow: hidden; transition: 0.3s; }
+        h2 { margin-top: 0; font-weight: 800; color: var(--custom-accent, var(--accent)); font-size: 1.5rem; display: flex; align-items: center; gap: 10px; }
+
+        /* ======================================================= */
+        /* === 4. Emoji 网格系统 (Emoji Grid) === */
+        /* ======================================================= */
+        
+        .home-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; }
+        
+        .app-card {
+            background: var(--card-bg); border: var(--card-border);
+            border-radius: var(--radius); padding: 25px; 
+            text-align: center; cursor: grab;
+            transition: transform 0.2s, box-shadow 0.2s, background 0.2s; 
+            box-shadow: var(--shadow); user-select: none;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            aspect-ratio: 1.2;
+        }
+        .app-card:hover { transform: translateY(-5px); border-color: var(--custom-accent, var(--accent)); }
+        
+        /* Emoji 样式 */
+        .app-card .icon {
+            font-size: 3rem; margin-bottom: 10px; line-height: 1;
+            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+        }
+        .app-card h3 { margin: 0; font-size: 1rem; font-weight: 600; opacity: 0.9; transition: 0.3s; }
+
+        /* 模式 1: 仅图标 (Icon Only) - 巨型Emoji */
+        .home-grid[data-mode="icon"] .app-card h3 { display: none; }
+        .home-grid[data-mode="icon"] .app-card .icon { font-size: 6rem; margin-bottom: 0; transform: scale(1.1); }
+
+        /* 模式 2: 仅文字 (Text Only) */
+        .home-grid[data-mode="text"] .app-card .icon { display: none; }
+        .home-grid[data-mode="text"] .app-card h3 { font-size: 1.6rem; font-weight: 900; letter-spacing: -1px; margin: 0; color: var(--custom-text, var(--text-main)); }
+
+        /* 设置面板小组件 */
+        .mode-switcher { display: flex; background: rgba(0,0,0,0.05); padding: 5px; border-radius: 12px; margin-bottom: 25px; }
+        .mode-btn { flex: 1; padding: 10px; border: none; background: transparent; cursor: pointer; font-size: 0.9rem; font-weight: 600; color: #666; border-radius: 8px; transition: 0.2s; }
+        .mode-btn.active { background: #fff; color: #000; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        [data-theme="win10"] .mode-btn.active { background: #444; color: #fff; }
+
+        .time-display { font-family: var(--font-num); font-size: calc(8rem * var(--timer-scale)); font-weight: 700; text-align: center; margin: 30px 0; line-height: 1; letter-spacing: -3px; color: var(--custom-text, var(--text-main)); }
+        
+        /* 禅模式 */
+        body.zen-mode #top-bar, body.zen-mode #fab-settings, body.zen-mode .non-zen-content { display: none !important; }
+        body.zen-mode .main-wrapper { margin: 0; padding: 0; max-width: none; width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; }
+        body.zen-mode .timer-box { width: 90%; height: 90%; max-width: none; margin: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        body.zen-mode .time-display { font-size: calc(25vw * var(--timer-scale)) !important; }
+
+        .hidden { display: none !important; }
+        .page { display: none; animation: slideUp 0.3s ease; }
+        .page.active { display: block; }
+        @keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+        
+        button, input { border: var(--card-border); outline: none; padding: 12px 20px; font-family: var(--font-ui); font-weight: 600; font-size: 1rem; border-radius: var(--radius); cursor: pointer; transition: 0.2s; background: rgba(255,255,255,0.5); color: var(--custom-text, var(--text-main)); }
+        .btn-primary { background: var(--custom-accent, var(--accent)); color: #fff !important; border: none; }
+        .list-item { display: flex; align-items: center; padding: 12px; background: rgba(0,0,0,0.05); margin-bottom: 8px; border-radius: 8px; }
+    </style>
+</head>
+<body>
+
+    <audio id="sfx-ding" src="https://cdn.jsdelivr.net/gh/tars-dev/cdn/sounds/ding.mp3"></audio>
+    <audio id="sfx-bell" src="https://cdn.jsdelivr.net/gh/tars-dev/cdn/sounds/bell.mp3"></audio>
+
+    <div id="toast-container" style="position:fixed; top:80px; left:50%; transform:translateX(-50%); z-index:9999; display:flex; flex-direction:column; gap:10px;"></div>
+
+    <!-- 增强背景层 -->
+    <div id="custom-bg-layer"></div>
+    <div id="bg-mask-layer"></div>
+    <div id="atmosphere-layer"></div>
+
+    <!-- 左侧侧边栏 -->
+    <div id="sidebar-overlay" onclick="View.toggleSidebar()"></div>
+    <div id="theme-sidebar">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h2 style="margin:0; font-size:1.5rem;">外观设置</h2>
+            <button onclick="View.toggleSidebar()" style="padding:5px 10px; background:transparent; border:none; font-size:1.2rem;">✕</button>
+        </div>
+
+        <label style="font-weight:bold; display:block; margin-bottom:10px;">主页显示模式</label>
+        <div class="mode-switcher">
+            <button class="mode-btn active" onclick="App.setMode('standard', this)">标准</button>
+            <button class="mode-btn" onclick="App.setMode('icon', this)">大图标</button>
+            <button class="mode-btn" onclick="App.setMode('text', this)">纯文字</button>
+        </div>
+        
+        <label style="font-weight:bold; display:block; margin-bottom:10px;">主题风格 (点击切换)</label>
+        <div class="theme-grid" id="theme-list">
+            <!-- JS 自动生成缩略图 -->
+        </div>
+
+        <!-- 自定义背景设置 -->
+        <div style="margin-top:30px; padding-top:20px; border-top:1px solid #ddd;">
+            <label style="font-weight:bold; display:block; margin-bottom:10px;">自定义壁纸</label>
+            <input id="bg-input" placeholder="输入图片 URL" style="width:100%; margin-bottom:10px;" onchange="BgEngine.updateBg()">
+            <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:5px;">
+                <span>壁纸遮罩 (变暗)</span>
+                <span id="mask-val">0%</span>
             </div>
-            <div class="invokeBox">
-                <button id="openUrl">open_url_browser</button>
-                <button id="openUrlNew">open_url_new</button>
-                <button id="runCommand">run_command</button>
-                <button id="downloadFile">download_file</button>
-                <button id="getExeDir">get_exe_dir</button>
-                <button id="getEnvVar">get_env_var</button>
-                <button id="findPort">find_port</button>
+            <input type="range" min="0" max="0.8" step="0.1" value="0" style="width:100%;" oninput="BgEngine.updateMask(this.value)">
+
+            <div style="margin-top:20px; display:flex; justify-content:space-between; align-items:center;">
+                <label style="font-weight:bold;">✨ 氛围粒子</label>
+                <input type="checkbox" id="particle-check" checked onchange="BgEngine.toggleParticles(this.checked)" style="width:20px; height:20px;">
             </div>
-        </main>
-    </body>
+        </div>
+
+        <div style="margin-top:20px; padding-top:20px; border-top:1px solid #ddd;">
+            <label style="font-weight:bold; display:block; margin-bottom:10px;">自由配色</label>
+            <div style="display:flex; gap:10px; justify-content: center;">
+                <input type="color" onchange="document.documentElement.style.setProperty('--custom-text', this.value); localStorage.setItem('customText', this.value)" title="字体色" style="width:40px; height:40px; padding:0; border-radius:50%; overflow:hidden;">
+                <input type="color" onchange="document.documentElement.style.setProperty('--custom-accent', this.value); localStorage.setItem('customAccent', this.value)" title="主题色" style="width:40px; height:40px; padding:0; border-radius:50%; overflow:hidden;">
+                <button style="font-size:0.8rem;" onclick="localStorage.removeItem('customText');localStorage.removeItem('customAccent');location.reload()">重置</button>
+            </div>
+        </div>
+
+        <div style="margin-top:20px;">
+            <label style="font-weight:bold; display:block; margin-bottom:5px;">字体大小</label>
+            <input type="range" min="0.5" max="2.0" step="0.1" value="1.0" style="width:100%;" oninput="document.documentElement.style.setProperty('--timer-scale', this.value)">
+        </div>
+    </div>
+
+    <!-- 顶部栏 -->
+    <div id="top-bar">
+        <button class="menu-btn" onclick="View.toggleSidebar()">
+            <span style="font-size:1.2rem;margin-right:5px;">🎨</span> 设置
+        </button>
+        <button id="btn-home" class="menu-btn hidden" onclick="App.goHome()">🏠 主页</button>
+        <div id="clock-real" style="font-family:var(--font-num); font-weight:700; background:var(--card-bg); padding:8px 15px; border-radius:20px; box-shadow:var(--shadow); border:var(--card-border);">00:00</div>
+    </div>
+
+    <div class="main-wrapper">
+        <div id="page-home" class="page active">
+            <div style="text-align:center; padding: 20px 0 40px;">
+                <h1 style="font-size: 2.5rem; margin: 0; letter-spacing: -1px;">V21.5 Atmosphere</h1>
+                <p style="opacity:0.6;">经典Emoji · 氛围粒子 · 自由定制</p>
+            </div>
+            <div class="home-grid" id="app-grid" data-mode="standard"></div>
+        </div>
+        
+        <!-- 各功能页 -->
+        <div id="page-exam" class="page"><div class="timer-box"><div class="non-zen-content" style="border-bottom:1px solid rgba(0,0,0,0.1); padding-bottom:20px; margin-bottom:20px;"><h2>📝 考场模拟</h2><div style="display:flex; gap:10px;"><input id="ex-sub" value="高等数学" placeholder="科目" style="width:140px;"><input id="ex-dur" type="number" value="120" style="width:70px"> 分钟</div></div><div style="text-align:center;"><h1 id="disp-sub" style="margin:0;">科目名称</h1><p id="disp-status" style="font-weight:bold; opacity:0.6; margin:10px 0;">等待开考</p><div class="timer-container"><div class="time-display" id="exam-timer">00:00</div></div></div><div class="controls non-zen-content"><button class="btn-primary" onclick="Modules.Exam.start()">开始</button><button class="btn-accent hidden" id="btn-exam-stop" onclick="Modules.Exam.stop()">结束</button><button onclick="View.toggleZen()">全屏</button></div></div></div>
+        <div id="page-pomo" class="page"><div class="timer-box" style="text-align:center;"><h2>🍅 番茄专注</h2><div class="timer-container"><div class="time-display" id="pomo-timer">25:00</div></div><div class="controls"><button class="btn-primary" onclick="Modules.Pomo.start()">开始</button><button onclick="Modules.Pomo.reset()">重置</button></div></div></div>
+        <div id="page-whiteboard" class="page"><div class="timer-box"><div style="display:flex; justify-content:space-between; margin-bottom:15px;"><h2>🎨 白板</h2><button onclick="Modules.Whiteboard.clear()">清空</button></div><div style="display:flex; gap:10px; margin-bottom:10px; justify-content:center;"><button style="width:30px;height:30px;border-radius:50%;background:#000;" onclick="Modules.Whiteboard.color='#000'"></button><button style="width:30px;height:30px;border-radius:50%;background:#d63031;" onclick="Modules.Whiteboard.color='#d63031'"></button><button style="width:30px;height:30px;border-radius:50%;background:#0984e3;" onclick="Modules.Whiteboard.color='#0984e3'"></button><button style="width:30px;height:30px;border-radius:50%;background:#fff;border:1px solid #ccc;" onclick="Modules.Whiteboard.color='#fff';Modules.Whiteboard.width=20"></button></div><canvas id="wb-canvas" width="800" height="400" style="background:#fff; width:100%; border-radius:12px; cursor:crosshair; box-shadow:inset 0 0 10px rgba(0,0,0,0.05);"></canvas></div></div>
+        <div id="page-media" class="page"><div class="timer-box"><h2>📺 媒体</h2><div class="media-drop-zone" onclick="document.getElementById('media-input').click()" style="border:2px dashed rgba(0,0,0,0.2); padding:40px; text-align:center; border-radius:12px; cursor:pointer;">📂 选择视频/音频文件<input type="file" id="media-input" hidden accept="video/*,audio/*" onchange="Modules.Media.load(this)"></div><div id="media-container" class="hidden" style="margin-top:20px;"><video id="video-player" controls style="width:100%; border-radius:12px; background:#000;"></video></div></div></div>
+        <div id="page-schedule" class="page"><div class="timer-box"><h2>📅 日程</h2><div id="schedule-list" style="margin:20px 0;"></div><div class="controls"><button onclick="Modules.Schedule.add()">+ 添加</button><button class="btn-accent" onclick="Modules.Schedule.clear()">清空</button></div></div></div>
+        <div id="page-countdown" class="page"><div class="timer-box"><h2>⏱️ 倒计时</h2><div class="controls"><input id="cd-input" type="number" value="10" style="width:60px"> 分</div><div class="timer-container"><div class="time-display" id="cd-timer">10:00</div></div><div class="controls"><button class="btn-primary" onclick="Modules.Countdown.start()">开始</button></div></div></div>
+        <div id="page-stopwatch" class="page"><div class="timer-box"><h2>⏲️ 秒表</h2><div class="timer-container"><div class="time-display" id="sw-timer">00:00.00</div></div><div class="controls"><button class="btn-primary" onclick="Modules.Stopwatch.start()">开始</button><button onclick="Modules.Stopwatch.pause()">暂停</button><button class="btn-accent" onclick="Modules.Stopwatch.reset()">清零</button></div></div></div>
+        <div id="page-todo" class="page"><div class="timer-box"><h2>✅ 待办</h2><div style="display:flex;gap:10px;margin:20px 0;"><input id="todo-input" style="flex:1"><button class="btn-primary" onclick="Modules.Todo.add()">添加</button></div><div id="todo-list"></div></div></div>
+        <div id="page-favs" class="page"><div class="timer-box"><h2>⭐ 收藏</h2><div id="fav-list" style="margin:20px 0;"></div><div class="controls"><input id="fav-name" placeholder="名"><input id="fav-url" placeholder="URL" style="flex:1"><button class="btn-primary" onclick="Modules.Favs.add()">存</button></div></div></div>
+        <div id="page-stats" class="page"><div class="timer-box"><h2>📊 统计</h2><div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;text-align:center;"><div style="background:rgba(0,0,0,0.05);padding:20px;border-radius:10px;"><div>总次数</div><div id="stat-total" style="font-size:2em;font-weight:bold;">0</div></div><div style="background:rgba(0,0,0,0.05);padding:20px;border-radius:10px;"><div>今日(分)</div><div id="stat-today" style="font-size:2em;font-weight:bold;">0</div></div></div></div></div>
+        <div id="page-long" class="page"><div class="timer-box"><h2>🎯 目标</h2><div style="text-align:center;margin-top:20px;"><h3>自定义目标</h3><div id="target-display" style="font-size:2em;margin:10px 0;">--</div><input type="datetime-local" id="target-input" onchange="Modules.Long.set('target')"></div></div></div>
+        <div id="page-account" class="page"><div class="timer-box"><h2>💾 数据</h2><div class="controls"><button onclick="Data.export()">导出JSON</button><button onclick="document.getElementById('file-in').click()">导入JSON</button><input type="file" id="file-in" hidden onchange="Data.import(this)"></div><button class="btn-accent" style="margin-top:20px;width:100%;" onclick="localStorage.clear();location.reload()">清空数据</button></div></div>
+    </div>
+
+    <!-- 悬浮设置按钮 -->
+    <button id="fab-settings" onclick="View.toggleSidebar()" style="position:fixed; bottom:30px; right:30px; width:60px; height:60px; border-radius:50%; background:var(--custom-accent, var(--accent)); color:#fff; font-size:1.5rem; z-index:1000; box-shadow:0 5px 15px rgba(0,0,0,0.3);">🎨</button>
+
+    <script>
+        // === 1. 10大主题配置 (含缩略图样式) ===
+        const Themes = [
+            { id: 'ios', name: 'iOS', bg: '#F2F2F7', text:'#1C1C1E', border:'none', card:'#FFF', radius:'12px', shadow:'0 2px 8px rgba(0,0,0,0.1)' },
+            { id: 'bauhaus', name: '包豪斯', bg: '#F0F0F0', text:'#121212', border:'3px solid #121212', card:'#FFF', radius:'0px', shadow:'4px 4px 0 #121212' },
+            { id: 'retro95', name: '复古Win95', bg: '#008080', text:'#000', border:'2px outset #fff', card:'#C0C0C0', radius:'0px', shadow:'2px 2px 0 #000', font:'VT323' },
+            { id: 'win10', name: 'Win 10', bg: '#1F1F1F', text:'#FFF', border:'1px solid #444', card:'#333', radius:'0px', shadow:'0 4px 15px #000' },
+            { id: 'win11', name: 'Win 11', bg: '#F3F3F3', text:'#202020', border:'1px solid rgba(0,0,0,0.05)', card:'#FFF', radius:'8px', shadow:'0 2px 8px rgba(0,0,0,0.05)' },
+            { id: 'neo', name: '新拟态', bg: '#E0E5EC', text:'#4A4A4A', border:'none', card:'#E0E5EC', radius:'12px', shadow:'5px 5px 10px #b8b9be, -5px -5px 10px #ffffff' },
+            { id: 'mini', name: '极简白', bg: '#FFF', text:'#000', border:'1px solid #eee', card:'#FFF', radius:'0px', shadow:'none' },
+            { id: 'line', name: '线条', bg: '#FFF', text:'#000', border:'2px solid #000', card:'transparent', radius:'0px', shadow:'3px 3px 0 #000', font:'JetBrains Mono' },
+            { id: 'cartoon', name: '卡通', bg: '#85FFBD', text:'#000', border:'3px solid #000', card:'#FFF', radius:'15px', shadow:'0 4px 0 rgba(0,0,0,0.2)', font:'Comic Neue' },
+            { id: 'pooh', name: '小熊维尼', bg: '#FFD93D', text:'#5D4037', border:'2px solid #FF6B6B', card:'#FFF8E1', radius:'15px', shadow:'0 4px 0 #FF6B6B', font:'Comic Neue' }
+        ];
+
+        // 智能氛围粒子配置 (根据主题映射Emoji)
+        const EmojiSets = {
+            ios: ['🍎', '📱', '⌚', '☁️'],
+            bauhaus: ['🟦', '🔴', '🟡', '📐'],
+            retro95: ['💾', '💿', '💻', '🕹️'],
+            win10: ['🟦', '🔳', '🖱️', '🔋'],
+            win11: ['💠', '🎨', '✨', '🖥️'],
+            neo: ['⚪', '🔘', '🌫️', '💿'],
+            mini: ['⚫', '⚪', '⬛', '⬜'],
+            line: ['✏️', '📏', '📐', '📝'],
+            cartoon: ['🎈', '🍭', '🎨', '🧩'],
+            pooh: ['🐻', '🍯', '🐝', '🎈']
+        };
+
+        // 使用 Emoji 作为图标
+        const AppState = {
+            pages: [
+                {id:'exam',icon:'📝',name:'考场'}, {id:'pomo',icon:'🍅',name:'番茄'}, {id:'whiteboard',icon:'🎨',name:'白板'}, {id:'media',icon:'📺',name:'媒体'},
+                {id:'schedule',icon:'📅',name:'日程'}, {id:'countdown',icon:'⏱️',name:'倒计时'}, {id:'stopwatch',icon:'⏲️',name:'秒表'}, {id:'todo',icon:'✅',name:'待办'},
+                {id:'favs',icon:'⭐',name:'收藏'}, {id:'stats',icon:'📊',name:'统计'}, {id:'long',icon:'🎯',name:'目标'}, {id:'account',icon:'💾',name:'数据'}
+            ],
+            order: JSON.parse(localStorage.getItem('appOrder')) || null
+        };
+
+        const BgEngine = {
+            updateBg: () => {
+                const url = document.getElementById('bg-input').value;
+                document.getElementById('custom-bg-layer').style.backgroundImage = url ? `url('${url}')` : 'none';
+            },
+            updateMask: (val) => {
+                document.getElementById('bg-mask-layer').style.opacity = val;
+                document.getElementById('mask-val').innerText = Math.round(val*100) + '%';
+            },
+            toggleParticles: (enable) => {
+                const layer = document.getElementById('atmosphere-layer');
+                layer.innerHTML = ''; // Clear existing
+                if(!enable) return;
+
+                const theme = localStorage.getItem('theme') || 'ios';
+                const emojis = EmojiSets[theme] || EmojiSets.ios;
+
+                // Create particles
+                for(let i=0; i<20; i++) {
+                    const p = document.createElement('div');
+                    p.className = 'emoji-particle';
+                    p.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+                    p.style.left = Math.random() * 100 + 'vw';
+                    p.style.fontSize = (Math.random() * 2 + 1) + 'rem';
+                    p.style.animationDuration = (20 + Math.random() * 40) + 's';
+                    p.style.animationDelay = -Math.random() * 60 + 's';
+                    layer.appendChild(p);
+                }
+            },
+            init: () => {
+                const bgUrl = localStorage.getItem('bgUrl');
+                if(bgUrl) { document.getElementById('bg-input').value = bgUrl; BgEngine.updateBg(); }
+                const particleOn = localStorage.getItem('particleOn') !== 'false';
+                document.getElementById('particle-check').checked = particleOn;
+                BgEngine.toggleParticles(particleOn);
+                
+                document.getElementById('bg-input').addEventListener('change', (e) => localStorage.setItem('bgUrl', e.target.value));
+                document.getElementById('particle-check').addEventListener('change', (e) => {
+                    localStorage.setItem('particleOn', e.target.checked);
+                    BgEngine.toggleParticles(e.target.checked);
+                });
+            }
+        };
+
+        const Utils = {
+            pad: n => n.toString().padStart(2,'0'),
+            format: (s,h) => { const H=Math.floor(s/3600),M=Math.floor((s%3600)/60),S=s%60; return (H>0||h)?`${Utils.pad(H)}:${Utils.pad(M)}:${Utils.pad(S)}`:`${Utils.pad(M)}:${Utils.pad(S)}`; },
+            fullScreen: on => on?document.documentElement.requestFullscreen().catch(()=>{}) : (document.fullscreenElement && document.exitFullscreen())
+        };
+
+        const View = {
+            toast: (msg) => {
+                const b = document.createElement('div');
+                b.style.cssText = "background:var(--custom-text, var(--text-main)); color:var(--card-bg); padding:10px 20px; border-radius:30px; box-shadow:0 5px 15px rgba(0,0,0,0.2); animation:slideUp 0.3s forwards;";
+                b.innerHTML = `ℹ️ ${msg}`;
+                document.getElementById('toast-container').appendChild(b);
+                setTimeout(()=>b.remove(),3000);
+            },
+            setTheme: (t) => { 
+                document.documentElement.setAttribute('data-theme', t); 
+                localStorage.setItem('theme', t);
+                document.querySelectorAll('.theme-thumb').forEach(el => el.classList.toggle('active', el.dataset.theme === t));
+                if(document.getElementById('particle-check').checked) BgEngine.toggleParticles(true);
+            },
+            toggleSidebar: () => { document.getElementById('theme-sidebar').classList.toggle('open'); document.getElementById('sidebar-overlay').classList.toggle('open'); },
+            toggleZen: () => {
+                document.body.classList.toggle('zen-mode');
+                Utils.fullScreen(document.body.classList.contains('zen-mode'));
+            }
+        };
+
+        const App = {
+            dragSrc: null,
+            init: () => {
+                const t = localStorage.getItem('theme') || 'ios';
+                View.setTheme(t);
+                BgEngine.init();
+
+                const cText = localStorage.getItem('customText');
+                if(cText) document.documentElement.style.setProperty('--custom-text', cText);
+                const cAccent = localStorage.getItem('customAccent');
+                if(cAccent) document.documentElement.style.setProperty('--custom-accent', cAccent);
+
+                // Init Display Mode
+                const savedMode = localStorage.getItem('displayMode') || 'standard';
+                App.setMode(savedMode);
+
+                // Render Themes
+                const themeList = document.getElementById('theme-list');
+                Themes.forEach(theme => {
+                    const d = document.createElement('div');
+                    d.className = 'theme-thumb';
+                    d.dataset.theme = theme.id;
+                    d.style.background = theme.bg;
+                    d.innerHTML = `
+                        <div class="mini-ui-card" style="
+                            background:${theme.card}; 
+                            border:${theme.border}; 
+                            color:${theme.text}; 
+                            border-radius:${theme.radius};
+                            box-shadow:${theme.shadow};
+                            font-family:${theme.font||'sans-serif'};
+                        ">Aa</div>
+                        <div class="theme-name-label" style="width:100%; text-align:center; font-size:0.8rem; color:${theme.id==='win10'||theme.id==='retro95'?'#fff':'#333'}; text-shadow:0 1px 2px rgba(255,255,255,0.8);">${theme.name}</div>
+                    `;
+                    d.onclick = () => View.setTheme(theme.id);
+                    if(t === theme.id) d.classList.add('active');
+                    themeList.appendChild(d);
+                });
+
+                App.renderGrid();
+                setInterval(()=>document.getElementById('clock-real').innerText=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),1000);
+                Modules.Todo.render(); Modules.Schedule.render(); Modules.Favs.render(); Modules.Long.init();
+                document.body.addEventListener('dblclick', ()=> {if(document.body.classList.contains('zen-mode')) View.toggleZen()});
+            },
+            setMode: (mode, btn) => {
+                document.getElementById('app-grid').setAttribute('data-mode', mode);
+                localStorage.setItem('displayMode', mode);
+                if(btn) {
+                    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                } else {
+                    const targetBtn = Array.from(document.querySelectorAll('.mode-btn')).find(b => b.onclick.toString().includes(`'${mode}'`));
+                    if(targetBtn) targetBtn.classList.add('active');
+                }
+            },
+            renderGrid: () => {
+                const grid = document.getElementById('app-grid');
+                grid.innerHTML = '';
+                if(!AppState.order) AppState.order = AppState.pages.map(p => p.id);
+                AppState.order.forEach((id) => {
+                    const page = AppState.pages.find(p => p.id === id);
+                    if(!page) return;
+                    const d = document.createElement('div');
+                    d.className = 'app-card'; d.draggable = true; d.setAttribute('data-id', id);
+                    d.innerHTML = `<div class="icon">${page.icon}</div><h3>${page.name}</h3>`;
+                    d.onclick = () => App.go(id);
+                    d.addEventListener('dragstart', App.handleDragStart);
+                    d.addEventListener('dragover', e => {e.preventDefault(); return false;});
+                    d.addEventListener('drop', App.handleDrop);
+                    d.addEventListener('dragend', () => document.querySelectorAll('.app-card').forEach(c => c.classList.remove('dragging')));
+                    grid.appendChild(d);
+                });
+            },
+            handleDragStart: (e) => { App.dragSrc = e.currentTarget; e.dataTransfer.effectAllowed = 'move'; e.currentTarget.classList.add('dragging'); },
+            handleDrop: (e) => {
+                e.stopPropagation();
+                const srcId = App.dragSrc.getAttribute('data-id');
+                const targetId = e.currentTarget.getAttribute('data-id');
+                if (srcId !== targetId) {
+                    const oldIdx = AppState.order.indexOf(srcId);
+                    const newIdx = AppState.order.indexOf(targetId);
+                    AppState.order.splice(oldIdx, 1);
+                    AppState.order.splice(newIdx, 0, srcId);
+                    localStorage.setItem('appOrder', JSON.stringify(AppState.order));
+                    App.renderGrid();
+                }
+                return false;
+            },
+            go: (id) => {
+                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                document.getElementById(`page-${id}`).classList.add('active');
+                document.getElementById('page-home').classList.remove('active');
+                document.getElementById('btn-home').classList.remove('hidden');
+                if(id==='whiteboard') setTimeout(Modules.Whiteboard.init, 100);
+            },
+            goHome: () => {
+                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                document.getElementById('page-home').classList.add('active');
+                document.getElementById('btn-home').classList.add('hidden');
+                if(document.body.classList.contains('zen-mode')) View.toggleZen();
+            }
+        };
+
+        class Engine { constructor(t,e){this.t=t;this.e=e;this.tm=null} start(s){this.stop();this.rem=s;this.tot=s;this.tm=setInterval(()=>{this.rem--;this.t(this.rem,this.tot);if(this.rem<=0){this.stop();this.e()}},1000)} stop(){clearInterval(this.tm)} }
+        const Modules={
+            activeEngine:null,
+            Exam:{ eng:new Engine((r,t)=>{document.getElementById('exam-timer').innerText=Utils.format(r,r>3600);},()=>{alert('结束');View.toggleZen()}), start:()=>{Modules.stopAll();Modules.Exam.eng.start(document.getElementById('ex-dur').value*60);if(!document.body.classList.contains('zen-mode'))View.toggleZen();}, stop:()=>{Modules.Exam.eng.stop();View.toggleZen();} },
+            Pomo:{ eng:new Engine((r,t)=>{document.getElementById('pomo-timer').innerText=Utils.format(r);},()=>{alert('完成')}), start:()=>{Modules.stopAll();Modules.Pomo.eng.start(25*60)}, reset:()=>{Modules.Pomo.eng.stop();document.getElementById('pomo-timer').innerText="25:00";} },
+            Whiteboard:{ ctx:null,color:'#000',width:3,drawing:false,init:()=>{const c=document.getElementById('wb-canvas');Modules.Whiteboard.ctx=c.getContext('2d');c.width=c.offsetWidth;c.height=400;const s=e=>{Modules.Whiteboard.drawing=true;Modules.Whiteboard.draw(e)};const end=()=>{Modules.Whiteboard.drawing=false;Modules.Whiteboard.ctx.beginPath()};c.onmousedown=s;c.onmousemove=Modules.Whiteboard.draw;c.onmouseup=end;c.ontouchstart=e=>{s(e.touches[0]);e.preventDefault()};c.ontouchmove=e=>{Modules.Whiteboard.draw(e.touches[0]);e.preventDefault()};c.ontouchend=end},draw:e=>{if(!Modules.Whiteboard.drawing)return;const r=e.target.getBoundingClientRect();const x=(e.clientX||e.pageX)-r.left,y=(e.clientY||e.pageY)-r.top;const x_c=Modules.Whiteboard.ctx;x_c.lineWidth=Modules.Whiteboard.width;x_c.lineCap='round';x_c.strokeStyle=Modules.Whiteboard.color;x_c.lineTo(x,y);x_c.stroke();x_c.beginPath();x_c.moveTo(x,y)},clear:()=>{const c=document.getElementById('wb-canvas');Modules.Whiteboard.ctx.clearRect(0,0,c.width,c.height)}},
+            Media:{ load:i=>{const f=i.files[0];if(f){document.getElementById('video-player').src=URL.createObjectURL(f);document.getElementById('media-container').classList.remove('hidden');document.querySelector('.media-drop-zone').style.display='none'}} },
+            Countdown:{ eng:new Engine((r,t)=>{document.getElementById('cd-timer').innerText=Utils.format(r);},()=>{alert('时间到')}), start:()=>{Modules.stopAll();Modules.Countdown.eng.start(document.getElementById('cd-input').value*60)} },
+            Stopwatch:{ t:0,tm:null,start:()=>{if(!Modules.Stopwatch.tm)Modules.Stopwatch.tm=setInterval(()=>{Modules.Stopwatch.t+=100;const d=new Date(Modules.Stopwatch.t);document.getElementById('sw-timer').innerText=`${Utils.pad(d.getUTCMinutes())}:${Utils.pad(d.getUTCSeconds())}.${Math.floor(d.getUTCMilliseconds()/10)}`},100)},pause:()=>{clearInterval(Modules.Stopwatch.tm);Modules.Stopwatch.tm=null},reset:()=>{Modules.Stopwatch.pause();Modules.Stopwatch.t=0;document.getElementById('sw-timer').innerText="00:00.00"} },
+            Todo:{ r:()=>{document.getElementById('todo-list').innerHTML=Data.store.todos.map((t,i)=>`<div class="list-item"><span onclick="Data.store.todos[${i}].done=!Data.store.todos[${i}].done;Data.save('todos');Modules.Todo.r()" style="flex:1;text-decoration:${t.done?'line-through':'none'}">${t.txt}</span><button onclick="Data.store.todos.splice(${i},1);Data.save('todos');Modules.Todo.r()" style="background:transparent;border:none;">×</button></div>`).join('')}, add:()=>{const v=document.getElementById('todo-input').value;if(v){Data.store.todos.push({txt:v,done:false});Data.save('todos');Modules.Todo.r();document.getElementById('todo-input').value=''}}, render: function(){this.r()} },
+            Schedule:{ r:()=>{document.getElementById('schedule-list').innerHTML=Data.store.schedule.map((s,i)=>`<div class="list-item"><span>${s}</span><button onclick="Data.store.schedule.splice(${i},1);Data.save('schedule');Modules.Schedule.r()" style="background:transparent;border:none;margin-left:auto;">×</button></div>`).join('')}, add:()=>{const v=prompt('内容');if(v){Data.store.schedule.push(v);Data.save('schedule');Modules.Schedule.r()}}, clear:()=>{Data.store.schedule=[];Data.save('schedule');Modules.Schedule.r()}, render: function(){this.r()} },
+            Favs:{ r:()=>{document.getElementById('fav-list').innerHTML=Data.store.favs.map((f,i)=>`<div class="list-item"><a href="${f.url}" target="_blank" style="flex:1">${f.name}</a><button onclick="Data.store.favs.splice(${i},1);Data.save('favs');Modules.Favs.r()" style="background:transparent;border:none;">×</button></div>`).join('')}, add:()=>{const n=document.getElementById('fav-name').value,u=document.getElementById('fav-url').value;if(n&&u){Data.store.favs.push({name:n,url:u});Data.save('favs');Modules.Favs.r()}}, render: function(){this.r()} },
+            Long:{ init:()=>{setInterval(()=>{['target','exam'].forEach(k=>{const d=Data.store.long[k];if(!d)return;const df=new Date(d)-new Date();const el=document.getElementById(k==='target'?'target-display':'exam-long-display');if(df<=0)el.innerText="DONE";else{const D=Math.floor(df/86400000),H=Math.floor((df%86400000)/3600000);el.innerText=`${D}天${H}时`}})},1000)}, set:k=>{Data.store.long[k]=document.getElementById(k==='target'?'target-input':'exam-long-input').value;localStorage.setItem(k==='target'?'targetDate':'examDate',Data.store.long[k])} },
+            stopAll:()=>{if(Modules.activeEngine)Modules.activeEngine.stop();Modules.Stopwatch.pause()}
+        };
+
+        const Data = {
+            store: {
+                todos: JSON.parse(localStorage.getItem('todos')||'[]'),
+                schedule: JSON.parse(localStorage.getItem('schedule')||'[]'),
+                favs: JSON.parse(localStorage.getItem('favs')||'[]'),
+                stats: JSON.parse(localStorage.getItem('stats')||'{"total":0,"today":0}'),
+                long: { target: localStorage.getItem('targetDate'), exam: localStorage.getItem('examDate') }
+            },
+            save: (k) => localStorage.setItem(k, JSON.stringify(Data.store[k])),
+            export: () => {
+                const b = new Blob([JSON.stringify(localStorage)], {type:'application/json'});
+                const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'backup.json'; a.click();
+            },
+            import: (inp) => {
+                const r = new FileReader();
+                r.onload = e => { Object.assign(localStorage, JSON.parse(e.target.result)); location.reload(); };
+                if(inp.files.length) r.readAsText(inp.files[0]);
+            }
+        };
+
+        window.onload = App.init;
+    </script>
+</body>
 </html>
